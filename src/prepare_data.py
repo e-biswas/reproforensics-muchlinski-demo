@@ -26,22 +26,26 @@ def prepare(df: pd.DataFrame, test_size: float = 0.25):
     """
     df = df.drop(columns=ID_COLS).copy()
 
-    # Impute missing values across the full dataframe.
-    imputer = KNNImputer(n_neighbors=5)
-    df_imputed = pd.DataFrame(
-        imputer.fit_transform(df),
-        columns=df.columns,
-        index=df.index,
-    )
+    y = df[TARGET].astype(int)
+    X = df.drop(columns=[TARGET])
 
-    y = df_imputed[TARGET].round().astype(int)
-    X = df_imputed.drop(columns=[TARGET])
-
-    X_train, X_test, y_train, y_test = train_test_split(
+    X_train_raw, X_test_raw, y_train, y_test = train_test_split(
         X,
         y,
         test_size=test_size,
         random_state=RANDOM_STATE,
         stratify=y,
+    )
+
+    imputer = KNNImputer(n_neighbors=5)
+    X_train = pd.DataFrame(
+        imputer.fit_transform(X_train_raw),
+        columns=X.columns,
+        index=X_train_raw.index,
+    )
+    X_test = pd.DataFrame(
+        imputer.transform(X_test_raw),
+        columns=X.columns,
+        index=X_test_raw.index,
     )
     return X_train, X_test, y_train, y_test
